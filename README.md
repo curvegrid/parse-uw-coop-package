@@ -20,7 +20,7 @@ This assumes you are an employer of University of Waterloo co-operative educatio
 1. Contact your Co-operative & Career Action (CECA) [representative](https://uwaterloo.ca/hire/about/people) and request a bulk download of student application packages. You can also download them from WaterlooWorks directly, but for more than a handful of applicants this is time consuming and tedious. **NOTE: you need to request they provide the download as one PDF per applicant, not a single PDF for all applicants.**
 1. Download an unzip the consolidated package.
 1. Install this utility, [`parse-uw-coop-package`](https://github.com/curvegrid/parse-uw-coop-package#installation).
-1. From the directory where you unzipped the consolidated package of PDFs, run `parse-uw-coop-package` and pipe the output to a CSV file. You can tweak the options (try `parse-uw-coop-package -h`) as required.
+1. From the directory where you unzipped the consolidated package of PDFs, run `parse-uw-coop-package` and pipe the output to a CSV file (e.g., `parse-uw-coop-package > applicants.csv`). You can tweak the options (try `parse-uw-coop-package -h`) as required.
 1. Import into your spreadsheet of choice. As noted above, manual cleanup will be required. 
 
 # Running and Command Line Options
