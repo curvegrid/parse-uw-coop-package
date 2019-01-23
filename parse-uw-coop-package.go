@@ -104,6 +104,14 @@ func main() {
 	recordsChan := make(chan []string, len(filenames))
 	var wg sync.WaitGroup
 
+	// Compile regexes
+	emailRe := regexp.MustCompile(options.emailRegex)
+	linkedInRe := regexp.MustCompile(options.linkedInRegex)
+	githubRe := regexp.MustCompile(options.githubRegex)
+	coverLetterRe := regexp.MustCompile(options.coverLetterRegex)
+	worktermEvalRe := regexp.MustCompile(options.worktermEvalRegex)
+	averagesRe := regexp.MustCompile(options.averagesRegex)
+
 	// spin up processing goroutines
 	for i := 0; i < options.concurrency; i++ {
 		wg.Add(1)
@@ -130,7 +138,6 @@ func main() {
 				// parse additional information
 
 				// email
-				emailRe := regexp.MustCompile(options.emailRegex)
 				emails := emailRe.FindAllString(pdfTextStr, -1)
 				uniqueEmails := uniqueStrings(true, emails)
 				emailsFiltered := strings.Join(uniqueEmails, ",")
@@ -142,15 +149,12 @@ func main() {
 				emailsFullFiltered := strings.Join(emailsFull, ",")
 
 				// linkedin
-				linkedInRe := regexp.MustCompile(options.linkedInRegex)
 				linkedIn := linkedInRe.FindString(pdfTextStr)
 
 				// github
-				githubRe := regexp.MustCompile(options.githubRegex)
 				github := githubRe.FindString(pdfTextStr)
 
 				// included a cover letter?
-				coverLetterRe := regexp.MustCompile(options.coverLetterRegex)
 				coverLetter := coverLetterRe.MatchString(pdfTextStr)
 				coverLetterStr := "No"
 				if coverLetter {
@@ -158,11 +162,9 @@ func main() {
 				}
 
 				// work term evaluation
-				worktermEvalRe := regexp.MustCompile(options.worktermEvalRegex)
 				worktermEvals := strings.Join(worktermEvalRe.FindAllString(pdfTextStr, -1), ",")
 
 				// grades and overall average
-				averagesRe := regexp.MustCompile(options.averagesRegex)
 				averagesMatch := averagesRe.FindAllStringSubmatch(pdfTextStr, -1)
 				averages := []string{}
 				var overallAverage float64
