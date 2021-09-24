@@ -1,5 +1,5 @@
 // Licensed under the MIT License
-// Copyright (c) 2018 Curvegrid Inc.
+// Copyright (c) 2018-2021 Curvegrid Inc.
 
 package main
 
@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -37,6 +38,7 @@ func uniqueStrings(squashCase bool, inStrs []string) (outStrs []string) {
 
 func main() {
 	options := struct {
+		idRegex           string
 		fileRegex         string
 		pdfToAscii        string
 		pathToParse       string
@@ -48,8 +50,9 @@ func main() {
 		worktermEvalRegex string
 		averagesRegex     string
 	}{
-		fileRegex:         `([A-Za-z -]+) ([A-Za-z-]+) \(([0-9]+)\).pdf`,
-		pdfToAscii:        "ps2ascii",
+		idRegex:           `[0-9]{7,10}`,
+		fileRegex:         `([a-zA-Z ]+)-([a-zA-Z ]+)-[0-9]+-.*.pdf`,
+		pdfToAscii:        `pdftotext %s -`,
 		pathToParse:       ".",
 		concurrency:       4, // 4 seems to be a sweet spot
 		emailRegex:        `[A-Za-z0-9_.-]+\@[A-Za-z0-9.-]+\.[A-Za-z0-9]+`,
@@ -60,6 +63,7 @@ func main() {
 		averagesRegex:     `Term Average:\s*([0-9]{2}\.*[0-9]*)`,
 	}
 
+	flag.StringVar(&options.idRegex, "idregex", options.idRegex, "Regex filter for student IDs")
 	flag.StringVar(&options.fileRegex, "fileregex", options.fileRegex, "Regex filter for filenames")
 	flag.StringVar(&options.pdfToAscii, "pdftoascii", options.pdfToAscii, "PDF to ASCII converter")
 	flag.IntVar(&options.concurrency, "concurrency", options.concurrency, "Number of PDF parsing threads to run in parallel")
@@ -91,7 +95,7 @@ func main() {
 		}
 
 		filenameComponents := fileRe.FindStringSubmatch(file.Name())
-		if len(filenameComponents) != 4 {
+		if len(filenameComponents) != 3 {
 			continue
 		}
 
@@ -104,7 +108,8 @@ func main() {
 	recordsChan := make(chan []string, len(filenames))
 	var wg sync.WaitGroup
 
-	// Compile regexes
+	// compile regexes
+	idRe := regexp.MustCompile(options.idRegex)
 	emailRe := regexp.MustCompile(options.emailRegex)
 	linkedInRe := regexp.MustCompile(options.linkedInRegex)
 	githubRe := regexp.MustCompile(options.githubRegex)
@@ -112,30 +117,54 @@ func main() {
 	worktermEvalRe := regexp.MustCompile(options.worktermEvalRegex)
 	averagesRe := regexp.MustCompile(options.averagesRegex)
 
+	// split out PDF to text command and its arguments
+	pdfCmdAndArgs := strings.Split(options.pdfToAscii, " ")
+	if len(pdfCmdAndArgs) < 2 {
+		log.Fatalf("Need at least two arguments to '-pdfToAscii', for example, found %v", len(pdfCmdAndArgs))
+	}
+	pdfCmd := pdfCmdAndArgs[0]
+	pdfArgsTemplate := pdfCmdAndArgs[1:]
+
 	// spin up processing goroutines
 	for i := 0; i < options.concurrency; i++ {
 		wg.Add(1)
 		go func() {
 			for filename := range filenameChan {
 				filenameComponents := fileRe.FindStringSubmatch(filename)
-				if len(filenameComponents) != 4 {
+				if len(filenameComponents) != 3 {
 					continue
 				}
 
 				// key fields from filename
 				firstName := filenameComponents[1]
 				lastName := filenameComponents[2]
-				id := filenameComponents[3]
+
+				// swap in the filename in the PDF arguments
+				pdfArgs := []string{}
+				for _, pdfArg := range pdfArgsTemplate {
+					if strings.Contains(pdfArg, "%s") || strings.Contains(pdfArg, "%v") {
+						pdfArgs = append(pdfArgs, fmt.Sprintf(pdfArg, filepath.Join(options.pathToParse, filename)))
+					} else {
+						pdfArgs = append(pdfArgs, pdfArg)
+					}
+				}
 
 				// extract text from PDF
-				cmd := exec.Command(options.pdfToAscii, filename)
+				cmd := exec.Command(pdfCmd, pdfArgs...)
 				pdfText, err := cmd.Output()
 				if err != nil {
+					exitErr, ok := err.(*exec.ExitError)
+					if ok {
+						log.Fatal(fmt.Sprintf("%v: %v", err, string(exitErr.Stderr)))
+					}
 					log.Fatal(err)
 				}
 				pdfTextStr := string(pdfText)
 
 				// parse additional information
+
+				// student ID
+				id := idRe.FindString(pdfTextStr)
 
 				// email
 				emails := emailRe.FindAllString(pdfTextStr, -1)

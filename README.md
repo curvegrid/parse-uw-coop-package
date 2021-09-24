@@ -58,12 +58,12 @@ ID,First name,Last name,Email,Email with name,LinkedIn,Github,Included a cover l
 
 # Known Issues and Limitations
 - This has only been tested on macOS.
-- The PDF-to-text converter defaults to `ps2ascii`, which may not be available on your system. See the command line options to adjust.
+- The PDF-to-text converter defaults to `pdftotext`, part of [Xpdf](https://www.xpdfreader.com/download.html), which may not be available on your system. On macOS via Homebrew it's part of [Poppler](https://poppler.freedesktop.org/): `brew install poppler`. See the command line options to adjust. Previously we used `ps2ascii`, a not-default part of Ghostscript, which unfortunately segfaults on a high proportion of modern PDF files.
 - The PDF-to-text process is not perfect, especially with formatted PDFs. Email addresses seem to be especially problematic, with many of them mangled. For example, we've seen `jeff@example.com` turn into `.com      example       je   ef@` with `ps2ascii`, even in what seems like a fairly "standard" formatted PDF. Manual cleanup will be required.
 
 # Future enhancements
 - DRY up the whole program
-- Switch from `ps2ascii` to a native Go PDF-to-text solution
+- Switch from `pdftotext` to a native Go PDF-to-text solution
 - Improve the parsing accuracy: better regexes, etc.
 - Direct package download, and integration with tabular info, from WaterlooWorks
 - Keyword extraction
@@ -83,4 +83,4 @@ $ ./parse-uw-coop-package
 Note that you will now have two copies of the `parse-uw-coop-package` binary on your system, the one in `$GOPATH/bin` via `go install`, and the one just built in `$GOPATH/src/curvegrid/parse-uw-coop-package` via `go build`.
 
 # License and Copyright
-Licensed under the MIT License. See the `LICENSE` file for details of the MIT License. Copyright 2018 by Curvegrid Inc.
+Licensed under the MIT License. See the `LICENSE` file for details of the MIT License. Copyright 2018-2021 by Curvegrid Inc.
