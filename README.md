@@ -27,7 +27,7 @@ This assumes you are an employer of University of Waterloo co-operative educatio
 By default, searches the current directory for all PDFs that fit a regular expression (`-fileregex`) and parse the text within for fields specific to UW co-op.
 
 ```sh
-Usage of ./parse-uw-coop-package:
+Usage of parse-uw-coop-package:
   -averagesRegex string
     	Regex for averages (default "Term Average:\\s*([0-9]{2}\\.*[0-9]*)")
   -concurrency int
@@ -37,13 +37,15 @@ Usage of ./parse-uw-coop-package:
   -emailRegex string
     	Regex for email address (default "[A-Za-z0-9_.-]+\\@[A-Za-z0-9.-]+\\.[A-Za-z0-9]+")
   -fileregex string
-    	Regex filter for filenames (default "([A-Za-z-]+) ([A-Za-z-]+) \\(([0-9]+)\\).pdf")
+    	Regex filter for filenames (default "([a-zA-Z ]+)-([a-zA-Z ]+)-[0-9]+-.*.pdf")
   -githubRegex string
     	Regex for Github (default "github.com/[A-Za-z0-9_.-]+")
+  -idregex string
+    	Regex filter for student IDs (default "[0-9]{7,10}")
   -linkedInRegex string
     	Regex for LinkedIn (default "linkedin.com/in/[A-Za-z0-9_.-]+")
   -pdftoascii string
-    	PDF to ASCII converter (default "ps2ascii")
+    	PDF to ASCII converter (default "pdftotext %s -")
   -worktermEvalRegex string
     	Regex for work term evaluations (default "UNSATISFACTORY|MARGINAL|SATISFACTORY|VERY GOOD|EXCELLENT|OUTSTANDING")
 ```
